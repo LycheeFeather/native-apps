@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Code Runner</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        textarea {
+            width: 90%;
+            height: 120px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            outline: none;
+        }
+        button {
+            background: #ff7eb3;
+            border: none;
+            padding: 10px 20px;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #ff4e88;
+        }
+        iframe {
+            width: 90%;
+            height: 300px;
+            border: 2px solid white;
+            background: white;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        h2, h3 {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <h2>✨ HTML Code Runner ✨</h2>
+    <label>HTML:</label>
+    <textarea id="htmlCode" placeholder="Enter HTML"></textarea>
+    <label>CSS:</label>
+    <textarea id="cssCode" placeholder="Enter CSS"></textarea>
+    <label>JavaScript:</label>
+    <textarea id="jsCode" placeholder="Enter JavaScript"></textarea>
+    <button onclick="runCode()">🚀 Run Code</button>
+    <h3>Output:</h3>
+    <iframe id="output"></iframe>
+    
+    <script>
+        function runCode() {
+            const html = document.getElementById("htmlCode").value;
+            const css = "<style>" + document.getElementById("cssCode").value + "</style>";
+            const js = "<script>" + document.getElementById("jsCode").value + "</scr" + "ipt>";
+            
+            const output = document.getElementById("output").contentWindow.document;
+            output.open();
+            output.write(html + css + js);
+            output.close();
+        }
+    </script>
+</body>
+</html>

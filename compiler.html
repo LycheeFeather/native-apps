@@ -6,10 +6,11 @@
   <title>Roblox Lua Editor</title>
   <style>
     body { margin: 0; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; }
-    #editor { flex-grow: 1; height: 90vh; border: none; }
+    #editor { flex-grow: 1; height: 80vh; border: none; }
     #toolbar { display: flex; gap: 0.5rem; padding: 0.5rem; background: #f5f5f5; flex-wrap: wrap; }
-    button, select { padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
+    button, select, input[type="color"] { padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
     input[type="file"] { display: none; }
+    #themeMaker { padding: 0.5rem; background: #e0e0e0; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
 </head>
@@ -20,202 +21,84 @@
     <input type="file" id="fileLoader" accept="application/json" onchange="loadFromFile(event)" />
     <select id="themeSelector" onchange="setTheme(this.value)"></select>
   </div>
+  <div id="themeMaker">
+    <label>🎨 Create Theme:</label>
+    <input type="text" id="themeName" placeholder="Theme Name" />
+    <label>BG</label><input type="color" id="bgColor" />
+    <label>Keyword</label><input type="color" id="kwColor" />
+    <label>String</label><input type="color" id="strColor" />
+    <label>Function</label><input type="color" id="fnColor" />
+    <button onclick="createTheme()">Add Theme</button>
+    <button onclick="saveThemes()">📥 Export Themes</button>
+    <input type="file" id="themeLoader" accept="application/json" onchange="loadThemes(event)" />
+    <label for="themeLoader" style="padding: 0.5rem 1rem; background: #ccc; cursor: pointer;">📂 Import Themes</label>
+  </div>
   <div id="editor"></div>
 
   <script>
-    const themes = {
-      "roblox-dark": {
-        base: "vs-dark",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "569CD6" },
-          { token: "string", foreground: "D7BA7D" },
-          { token: "identifier", foreground: "9CDCFE" },
-          { token: "function", foreground: "4EC9B0" },
-        ],
-        colors: { "editor.background": "#1e1e2e" }
-      },
-      "roblox-light": {
-        base: "vs",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "0000ff" },
-          { token: "string", foreground: "a31515" },
-          { token: "function", foreground: "795e26" },
-        ],
-        colors: { "editor.background": "#ffffff" }
-      },
-      "neon-night": {
-        base: "vs-dark",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "ff00ff" },
-          { token: "string", foreground: "00ffcc" },
-          { token: "function", foreground: "ffff00" },
-        ],
-        colors: { "editor.background": "#1a1a2e" }
-      },
-      "ocean-blue": {
-        base: "vs-dark",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "5eb3ff" },
-          { token: "string", foreground: "a7ffeb" },
-          { token: "function", foreground: "ffd54f" },
-        ],
-        colors: { "editor.background": "#0d47a1" }
-      },
-      "sunset": {
-        base: "vs",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "ff7043" },
-          { token: "string", foreground: "ffee58" },
-          { token: "function", foreground: "4db6ac" },
-        ],
-        colors: { "editor.background": "#fff3e0" }
-      },
-      "matrix": {
-        base: "vs-dark",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "00ff00" },
-          { token: "string", foreground: "00ff00" },
-          { token: "function", foreground: "00ff00" },
-        ],
-        colors: { "editor.background": "#000000" }
-      },
-      "lavender": {
-        base: "vs",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "7e57c2" },
-          { token: "string", foreground: "ce93d8" },
-          { token: "function", foreground: "9575cd" },
-        ],
-        colors: { "editor.background": "#f3e5f5" }
-      },
-      "forest": {
-        base: "vs-dark",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "81c784" },
-          { token: "string", foreground: "aed581" },
-          { token: "function", foreground: "388e3c" },
-        ],
-        colors: { "editor.background": "#263238" }
-      },
-      "high-contrast": {
-        base: "vs-dark",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "ffffff" },
-          { token: "string", foreground: "ffff00" },
-          { token: "function", foreground: "00ffff" },
-        ],
-        colors: { "editor.background": "#000000" }
-      },
-      "pastel": {
-        base: "vs",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "ba68c8" },
-          { token: "string", foreground: "f48fb1" },
-          { token: "function", foreground: "81d4fa" },
-        ],
-        colors: { "editor.background": "#fce4ec" }
-      },
-      "fire": {
-        base: "vs-dark",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "ff8a65" },
-          { token: "string", foreground: "ffccbc" },
-          { token: "function", foreground: "ff7043" },
-        ],
-        colors: { "editor.background": "#3e2723" }
-      },
-      "cyberpunk": {
-        base: "vs-dark",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "e91e63" },
-          { token: "string", foreground: "00e5ff" },
-          { token: "function", foreground: "ffea00" },
-        ],
-        colors: { "editor.background": "#212121" }
-      },
-      "iceberg": {
-        base: "vs",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "00acc1" },
-          { token: "string", foreground: "4dd0e1" },
-          { token: "function", foreground: "26c6da" },
-        ],
-        colors: { "editor.background": "#e0f7fa" }
-      },
-      "classic": {
-        base: "vs",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "000080" },
-          { token: "string", foreground: "800000" },
-          { token: "function", foreground: "008000" },
-        ],
-        colors: { "editor.background": "#ffffff" }
-      },
-      "night-sky": {
-        base: "vs-dark",
-        inherit: true,
-        rules: [
-          { token: "keyword", foreground: "90caf9" },
-          { token: "string", foreground: "f48fb1" },
-          { token: "function", foreground: "ffcc80" },
-        ],
-        colors: { "editor.background": "#0d1117" }
-      }
-    };
+    const themes = {};
 
-    require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' } });
-    require(["vs/editor/editor.main"], function () {
-      for (const theme in themes) {
-        monaco.editor.defineTheme(theme, themes[theme]);
-        const option = document.createElement("option");
-        option.value = theme;
-        option.textContent = theme;
-        document.getElementById("themeSelector").appendChild(option);
-      }
+    function registerTheme(name, base, bg, kw, str, fn) {
+      themes[name] = {
+        base,
+        inherit: true,
+        rules: [
+          { token: "keyword", foreground: kw.replace('#','') },
+          { token: "string", foreground: str.replace('#','') },
+          { token: "function", foreground: fn.replace('#','') },
+        ],
+        colors: { "editor.background": bg }
+      };
+      monaco.editor.defineTheme(name, themes[name]);
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      document.getElementById("themeSelector").appendChild(opt);
+    }
 
-      monaco.editor.setTheme("roblox-dark");
+    function createTheme() {
+      const name = document.getElementById("themeName").value;
+      const bg = document.getElementById("bgColor").value;
+      const kw = document.getElementById("kwColor").value;
+      const str = document.getElementById("strColor").value;
+      const fn = document.getElementById("fnColor").value;
+      if (!name || !bg || !kw || !str || !fn) return alert("Fill all fields!");
+      registerTheme(name, "vs-dark", bg, kw, str, fn);
+    }
 
-      window.editor = monaco.editor.create(document.getElementById("editor"), {
-        value: localStorage.getItem("robloxLuaCode") || "print(\"Hello, Roblox!\")",
-        language: "lua",
-        theme: "roblox-dark",
-      });
+    function saveThemes() {
+      const blob = new Blob([JSON.stringify(themes, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "custom_themes.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
 
-      monaco.languages.registerCompletionItemProvider("lua", {
-        provideCompletionItems: function(model, position) {
-          const word = model.getWordUntilPosition(position);
-          const range = {
-            startLineNumber: position.lineNumber,
-            endLineNumber: position.lineNumber,
-            startColumn: word.startColumn,
-            endColumn: word.endColumn
-          };
-          const suggestions = [
-            { label: "print", kind: monaco.languages.CompletionItemKind.Function, insertText: "print()", insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range },
-            { label: "wait", kind: monaco.languages.CompletionItemKind.Function, insertText: "wait()", insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range },
-            { label: "game", kind: monaco.languages.CompletionItemKind.Keyword, insertText: "game", range },
-            { label: "workspace", kind: monaco.languages.CompletionItemKind.Keyword, insertText: "workspace", range },
-            { label: "script", kind: monaco.languages.CompletionItemKind.Keyword, insertText: "script", range },
-            { label: "Instance.new", kind: monaco.languages.CompletionItemKind.Function, insertText: "Instance.new(\"\")", insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range },
-          ];
-          return { suggestions: suggestions };
+    function loadThemes(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const loadedThemes = JSON.parse(e.target.result);
+          for (const [name, themeData] of Object.entries(loadedThemes)) {
+            themes[name] = themeData;
+            monaco.editor.defineTheme(name, themeData);
+            const opt = document.createElement("option");
+            opt.value = name;
+            opt.textContent = name;
+            document.getElementById("themeSelector").appendChild(opt);
+          }
+        } catch (err) {
+          alert("Invalid theme file");
         }
-      });
-    });
+      };
+      reader.readAsText(file);
+    }
 
     function saveToFile() {
       const code = window.editor.getValue();
@@ -253,6 +136,38 @@
     function setTheme(themeName) {
       monaco.editor.setTheme(themeName);
     }
+
+    require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' } });
+    require(["vs/editor/editor.main"], function () {
+      registerTheme("roblox-dark", "vs-dark", "#1e1e2e", "#569CD6", "#D7BA7D", "#4EC9B0");
+      setTheme("roblox-dark");
+      window.editor = monaco.editor.create(document.getElementById("editor"), {
+        value: localStorage.getItem("robloxLuaCode") || "print(\"Hello, Roblox!\")",
+        language: "lua",
+        theme: "roblox-dark",
+      });
+
+      monaco.languages.registerCompletionItemProvider("lua", {
+        provideCompletionItems: function(model, position) {
+          const word = model.getWordUntilPosition(position);
+          const range = {
+            startLineNumber: position.lineNumber,
+            endLineNumber: position.lineNumber,
+            startColumn: word.startColumn,
+            endColumn: word.endColumn
+          };
+          const suggestions = [
+            { label: "print", kind: monaco.languages.CompletionItemKind.Function, insertText: "print()", insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range },
+            { label: "wait", kind: monaco.languages.CompletionItemKind.Function, insertText: "wait()", insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range },
+            { label: "game", kind: monaco.languages.CompletionItemKind.Keyword, insertText: "game", range },
+            { label: "workspace", kind: monaco.languages.CompletionItemKind.Keyword, insertText: "workspace", range },
+            { label: "script", kind: monaco.languages.CompletionItemKind.Keyword, insertText: "script", range },
+            { label: "Instance.new", kind: monaco.languages.CompletionItemKind.Function, insertText: "Instance.new(\"\")", insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range },
+          ];
+          return { suggestions: suggestions };
+        }
+      });
+    });
   </script>
 </body>
 </html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roblox Lua Editor</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; }
+    #editor { flex-grow: 1; height: 90vh; border: none; }
+    #toolbar { display: flex; gap: 0.5rem; padding: 0.5rem; background: #f5f5f5; }
+    button { padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
+    input[type="file"] { display: none; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs/loader.min.js"></script>
+</head>
+<body>
+  <div id="toolbar">
+    <button onclick="saveToFile()">💾 Export JSON</button>
+    <label for="fileLoader" style="padding: 0.5rem 1rem; background: #ccc; cursor: pointer;">📂 Import JSON</label>
+    <input type="file" id="fileLoader" accept="application/json" onchange="loadFromFile(event)" />
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+  <div id="editor"></div>
+
+  <script>
+    let currentTheme = "vs-dark";
+
+    require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' } });
+    require(["vs/editor/editor.main"], function () {
+      window.editor = monaco.editor.create(document.getElementById("editor"), {
+        value: localStorage.getItem("robloxLuaCode") || "print(\"Hello, Roblox!\")",
+        language: "lua",
+        theme: currentTheme,
+      });
+
+      monaco.languages.registerCompletionItemProvider("lua", {
+        provideCompletionItems: function(model, position) {
+          const word = model.getWordUntilPosition(position);
+          const range = {
+            startLineNumber: position.lineNumber,
+            endLineNumber: position.lineNumber,
+            startColumn: word.startColumn,
+            endColumn: word.endColumn
+          };
+          const suggestions = [
+            { label: "print", kind: monaco.languages.CompletionItemKind.Function, insertText: "print()", insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range },
+            { label: "wait", kind: monaco.languages.CompletionItemKind.Function, insertText: "wait()", insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range },
+            { label: "game", kind: monaco.languages.CompletionItemKind.Keyword, insertText: "game", range },
+            { label: "workspace", kind: monaco.languages.CompletionItemKind.Keyword, insertText: "workspace", range },
+            { label: "script", kind: monaco.languages.CompletionItemKind.Keyword, insertText: "script", range },
+            { label: "Instance.new", kind: monaco.languages.CompletionItemKind.Function, insertText: "Instance.new(\"\")", insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet, range },
+          ];
+          return { suggestions: suggestions };
+        }
+      });
+    });
+
+    function saveToFile() {
+      const code = window.editor.getValue();
+      const blob = new Blob([JSON.stringify({ code: code }, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "roblox_code.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function loadFromFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const content = JSON.parse(e.target.result);
+          if (content.code) {
+            window.editor.setValue(content.code);
+          } else {
+            alert("Invalid JSON: 'code' property missing.");
+          }
+        } catch (err) {
+          alert("Failed to parse JSON file.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function toggleTheme() {
+      currentTheme = currentTheme === "vs-dark" ? "vs-light" : "vs-dark";
+      monaco.editor.setTheme(currentTheme);
+    }
+  </script>
+</body>
+</html>

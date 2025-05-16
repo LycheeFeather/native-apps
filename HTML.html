@@ -37,6 +37,7 @@
             border-radius: 5px;
             cursor: pointer;
             transition: 0.3s;
+            margin: 5px;
         }
         button:hover {
             background: #ff4e88;
@@ -62,7 +63,10 @@
     <textarea id="cssCode" placeholder="Enter CSS"></textarea>
     <label>JavaScript:</label>
     <textarea id="jsCode" placeholder="Enter JavaScript"></textarea>
-    <button onclick="runCode()">🚀 Run Code</button>
+    <div>
+        <button onclick="runCode()">🚀 Run Code</button>
+        <button onclick="fullscreenOutput()">🖥 Full Screen Preview</button>
+    </div>
     <h3>HTML Output:</h3>
     <iframe id="output"></iframe>
     
@@ -70,12 +74,23 @@
         function runCode() {
             const html = document.getElementById("htmlCode").value;
             const css = "<style>" + document.getElementById("cssCode").value + "</style>";
-            const js = "<script>" + document.getElementById("jsCode").value + "</scr" + "ipt>";
-            
+            const js = "<script>" + document.getElementById("jsCode").value + "<\/script>";
+
             const output = document.getElementById("output").contentWindow.document;
             output.open();
             output.write(html + css + js);
             output.close();
+        }
+
+        function fullscreenOutput() {
+            const iframe = document.getElementById("output");
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.webkitRequestFullscreen) { // Safari
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) { // IE11
+                iframe.msRequestFullscreen();
+            }
         }
     </script>
 </body>

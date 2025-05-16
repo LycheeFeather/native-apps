@@ -18,17 +18,31 @@
     <button onclick="saveToFile()">💾 Export JSON</button>
     <label for="fileLoader" style="padding: 0.5rem 1rem; background: #ccc; cursor: pointer;">📂 Import JSON</label>
     <input type="file" id="fileLoader" accept="application/json" onchange="loadFromFile(event)" />
-    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+    <button onclick="toggleTheme()">🎨 Toggle Theme</button>
   </div>
   <div id="editor"></div>
 
   <script>
-    let currentTheme = "vs-dark";
+    let currentTheme = "roblox-dark";
 
     require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.1/min/vs' } });
     require(["vs/editor/editor.main"], function () {
+      monaco.editor.defineTheme("roblox-dark", {
+        base: "vs-dark",
+        inherit: true,
+        rules: [
+          { token: "keyword", foreground: "569CD6" },
+          { token: "string", foreground: "D7BA7D" },
+          { token: "identifier", foreground: "9CDCFE" },
+          { token: "function", foreground: "4EC9B0" },
+        ],
+        colors: {
+          "editor.background": "#1e1e2e"
+        }
+      });
+
       window.editor = monaco.editor.create(document.getElementById("editor"), {
-        value: localStorage.getItem("robloxLuaCode") || "print(\"Hello, Roblox!\")",
+        value: localStorage.getItem("robloxLuaCode") || "-- XPCompiler",
         language: "lua",
         theme: currentTheme,
       });
@@ -89,7 +103,7 @@
     }
 
     function toggleTheme() {
-      currentTheme = currentTheme === "vs-dark" ? "vs-light" : "vs-dark";
+      currentTheme = currentTheme === "roblox-dark" ? "vs-light" : "roblox-dark";
       monaco.editor.setTheme(currentTheme);
     }
   </script>
